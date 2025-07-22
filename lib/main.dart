@@ -1,5 +1,5 @@
+import 'package:ar_demo/feature/demo_2/ar_measuring_screen.dart';
 import 'package:flutter/material.dart';
-import 'feature/demo_4/ar_tracked_measuring_demo.dart';
 
 void main() {
   runApp(const MyApp());
@@ -70,7 +70,7 @@ class HomeScreen extends StatelessWidget {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const ARTrackedMeasuringDemo(),
+                    builder: (context) => ARMeasureScreen(),
                   ),
                 );
               },
