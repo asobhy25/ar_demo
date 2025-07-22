@@ -51,7 +51,8 @@
 	<string>This app may use location services for enhanced AR tracking.</string>
 	<key>UIRequiredDeviceCapabilities</key>
 	<array>
-    <string>arkit</string>
+		<string>arm64</string>
+		<string>arkit</string>
 	</array>
 </dict>
 </plist>

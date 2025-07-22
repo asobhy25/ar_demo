@@ -9,6 +9,7 @@ import 'package:ar_flutter_plugin/ar_flutter_plugin.dart';
 import 'package:ar_flutter_plugin/datatypes/config_planedetection.dart';
 import 'package:ar_flutter_plugin/models/ar_node.dart';
 import 'package:ar_flutter_plugin/models/ar_hittest_result.dart';
+import 'package:flutter/services.dart';
 import 'package:vector_math/vector_math_64.dart' as vector;
 
 class ARTrackedMeasuringDemo extends StatefulWidget {
@@ -88,22 +89,13 @@ class _ARTrackedMeasuringDemoState extends State<ARTrackedMeasuringDemo> {
 
     this.arSessionManager?.onInitialize(
           showFeaturePoints: false,
-          showPlanes: true,
+          showPlanes: false,
           customPlaneTexturePath: 'assets/textures/plane_grid.png',
-          showWorldOrigin: true,
-          handlePans: true,
-          handleRotation: true,
+          showWorldOrigin: false,
         );
 
     this.arObjectManager!.onInitialize();
-
     this.arSessionManager?.onPlaneOrPointTap = onPlaneOrPointTapped;
-    this.arObjectManager?.onPanStart = onPanStarted;
-    this.arObjectManager?.onPanChange = onPanChanged;
-    this.arObjectManager?.onPanEnd = onPanEnded;
-    this.arObjectManager?.onRotationStart = onRotationStarted;
-    this.arObjectManager?.onRotationChange = onRotationChanged;
-    this.arObjectManager?.onRotationEnd = onRotationEnded;
   }
 
   onPlaneOrPointTapped(List<ARHitTestResult> hitTestResults) async {
@@ -114,12 +106,19 @@ class _ARTrackedMeasuringDemoState extends State<ARTrackedMeasuringDemo> {
       if (didAddAnchor!) {
         this.anchors.add(newAnchor);
         // Add note to anchor
+
+        final position = singleHitTestResult.worldTransform.getTranslation();
+        final rotation = singleHitTestResult.worldTransform.getRow(0);
+        final scale = singleHitTestResult.worldTransform.matrixScale;
+
+        HapticFeedback.lightImpact();
+
         var newNode = ARNode(
           type: NodeType.webGLB,
           uri: "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Models/master/2.0/AnimatedMorphSphere/glTF-Binary/AnimatedMorphSphere.glb",
-          scale: vector.Vector3(0.2, 0.2, 0.2),
-          position: vector.Vector3(0.0, 0.0, 0.0),
-          rotation: vector.Vector4(1.0, 0.0, 0.0, 0.0),
+          scale: scale,
+          position: position,
+          rotation: rotation,
         );
         bool? didAddNodeToAnchor = await this.arObjectManager!.addNode(newNode, planeAnchor: newAnchor);
         if (didAddNodeToAnchor!) {
@@ -133,44 +132,6 @@ class _ARTrackedMeasuringDemoState extends State<ARTrackedMeasuringDemo> {
         this.arSessionManager!.onError("Adding Anchor failed");
       }
     }
-  }
-
-  onPanStarted(String nodeName) {
-    print('🔄 Pan started: ${nodeName}');
-  }
-
-  onPanChanged(String nodeName) {
-    print('🔄 Pan changed: ${nodeName}');
-  }
-
-  onPanEnded(String nodeName, Matrix4 newTransform) {
-    print("Ended panning node " + nodeName);
-    // final pannedNode = this.nodes.firstWhere((element) => element.name == nodeName);
-
-    /*
-    * Uncomment the following command if you want to keep the transformations of the Flutter representations of the nodes up to date
-    * (e.g. if you intend to share the nodes through the cloud)
-    */
-    // pannedNode.transform = newTransform;
-  }
-
-  onRotationStarted(String nodeName) {
-    print('🔄 Rotation started: ${nodeName}');
-  }
-
-  onRotationChanged(String nodeName) {
-    print('🔄 Rotation changed: ${nodeName}');
-  }
-
-  onRotationEnded(String nodeName, Matrix4 newTransform) {
-    print("Ended rotating node " + nodeName);
-    // final rotatedNode = this.nodes.firstWhere((element) => element.name == nodeName);
-
-    /*
-    * Uncomment the following command if you want to keep the transformations of the Flutter representations of the nodes up to date
-    * (e.g. if you intend to share the nodes through the cloud)
-    */
-    // rotatedNode.transform = newTransform;
   }
 
   // void onPlaneOrPointTapped(List<ARHitTestResult> hits) async {
