@@ -1,4 +1,3 @@
-import 'package:ar_flutter_plugin/datatypes/hittest_result_types.dart';
 import 'package:ar_flutter_plugin/datatypes/node_types.dart';
 import 'package:ar_flutter_plugin/managers/ar_location_manager.dart';
 import 'package:ar_flutter_plugin/managers/ar_session_manager.dart';
@@ -125,6 +124,8 @@ class _ARTrackedMeasuringDemoState extends State<ARTrackedMeasuringDemo> {
         bool? didAddNodeToAnchor = await this.arObjectManager!.addNode(newNode, planeAnchor: newAnchor);
         if (didAddNodeToAnchor!) {
           this.nodes.add(newNode);
+          print('✅ AR-tracked measurement point added successfully');
+          print('✅ AR-tracked measurement point ${newNode.position.x}, ${newNode.position.y}, ${newNode.position.z}');
         } else {
           this.arSessionManager!.onError("Adding Node to Anchor failed");
         }

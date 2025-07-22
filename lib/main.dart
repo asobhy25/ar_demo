@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'feature/demo_4/ar_tracked_measuring_demo.dart';
+import 'demo_4/ar_tracked_measuring_demo.dart';
 
 void main() {
   runApp(const MyApp());
