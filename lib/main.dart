@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,6 +27,25 @@ class MyApp extends StatelessWidget {
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  static const platform = MethodChannel('com.example.ar_measure/ar');
+
+  Future<void> _startARMeasurement(BuildContext context) async {
+    try {
+      await platform.invokeMethod('startARMeasurement');
+    } on PlatformException catch (e) {
+      if (e.code == 'UNAVAILABLE') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(e.message ?? 'AR features not available')),
+        );
+      } else {
+        print("Failed to start AR measurement: '${e.message}'.");
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to start AR: ${e.message}')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -65,16 +85,9 @@ class HomeScreen extends StatelessWidget {
             ),
             const SizedBox(height: 50),
             ElevatedButton(
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SizedBox(),
-                  ),
-                );
-              },
+              onPressed: () => _startARMeasurement(context),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue,
+                backgroundColor: Colors.orange,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 40,
@@ -91,7 +104,7 @@ class HomeScreen extends StatelessWidget {
                   Icon(Icons.straighten, size: 24),
                   SizedBox(width: 12),
                   Text(
-                    'Simple Measuring (BLoC)',
+                    'Start AR Measurement',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
@@ -122,9 +135,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '1. Tap surfaces to place 2 points\n'
-                    '2. Distance calculated automatically\n'
-                    '3. Uses BLoC for state management',
+                    '1. Tap "Start AR Measurement" for native AR\n'
+                    '2. Tap surfaces to place measurement points\n'
+                    '3. Distance calculated automatically',
                     style: TextStyle(fontSize: 14),
                   ),
                 ],

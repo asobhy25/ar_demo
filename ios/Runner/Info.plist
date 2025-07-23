@@ -46,7 +46,9 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>NSCameraUsageDescription</key>
-	<string>This app uses the camera for augmented reality distance measuring functionality.</string>
+	<string>This app needs camera access for AR measurement features</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for AR features</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app may use location services for enhanced AR tracking.</string>
 	<key>UIRequiredDeviceCapabilities</key>
