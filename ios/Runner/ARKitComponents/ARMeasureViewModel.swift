@@ -554,6 +554,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
     }
     
     func cancelMeasurement() {
+        pauseARSession()
         onDismiss?()
     }
     
@@ -562,7 +563,16 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
             totalDistance: totalDistance,
             measurementLines: measurements
         )
+        pauseARSession()
         onSubmit?(result)
+    }
+    
+    private func pauseARSession() {
+        arView?.session.pause()
+    }
+    
+    deinit {
+        pauseARSession()
     }
     
     func toggleObjectDetection() {
