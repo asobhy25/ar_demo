@@ -13,15 +13,14 @@ import SwiftUI  // Add SwiftUI import for UIHostingController
         
         let controller: FlutterViewController = window?.rootViewController as! FlutterViewController
         let arChannel = FlutterMethodChannel(
-            name: "com.example.ar_measure/ar",
+            name: AppChannelEnum.arMeasure.rawValue,
             binaryMessenger: controller.binaryMessenger
         )
         
-        arChannel.setMethodCallHandler { [weak self] (call, result) in
-            if call.method == "startARMeasurement" {
+        arChannel.setMethodCallHandler { [weak self] (call: FlutterMethodCall, result: @escaping FlutterResult) in
+            if call.method == MethodChannelEnum.startARMeasurement.rawValue {
                 if #available(iOS 15.0, *) {
-                    self?.startARMeasurement(controller: controller)
-                    result(nil)
+                    self?.startARMeasurement(controller: controller, result: result)
                 } else {
                     result(FlutterError(
                         code: "UNAVAILABLE",
@@ -38,24 +37,51 @@ import SwiftUI  // Add SwiftUI import for UIHostingController
     }
     
     @available(iOS 15.0, *)
-    private func startARMeasurement(controller: FlutterViewController) {
-        // Check if SwiftUI is available
-        if #available(iOS 15.0, *) {
-            // Initialize your existing AR components - ARMeasureView creates its own viewModel
-            let arView = UIHostingController(rootView: ARMeasureView())
-            
-            // Present your custom AR view
-            arView.modalPresentationStyle = UIModalPresentationStyle.fullScreen
-            controller.present(arView, animated: true)
-        } else {
-            // Fallback for older iOS versions
-            let alert = UIAlertController(
-                title: "AR Not Available", 
-                message: "AR features require iOS 15.0 or later", 
-                preferredStyle: .alert
-            )
-            alert.addAction(UIAlertAction(title: "OK", style: .default))
-            controller.present(alert, animated: true)
+    private func startARMeasurement(controller: FlutterViewController, result: @escaping FlutterResult) {
+        let arViewModel = ARMeasureViewModel()
+        let arView = UIHostingController(rootView: ARMeasureView(viewModel: arViewModel))
+        
+        // Set up dismiss callback
+        arViewModel.onDismiss = { [weak arView] in
+            DispatchQueue.main.async {
+                arView?.dismiss(animated: true)
+                result(nil)
+            }
         }
+        
+        // Set up submit callback
+        arViewModel.onSubmit = { [weak arView] measurementResult in
+            DispatchQueue.main.async {
+                // Convert to simple types for Flutter codec
+                let measurementLinesData = measurementResult.measurementLines.map { line in
+                    return [
+                        "id": line.id.uuidString,
+                        "distance": line.distance,
+                        "startPoint": [
+                            "x": line.startPoint.x,
+                            "y": line.startPoint.y,
+                            "z": line.startPoint.z
+                        ],
+                        "endPoint": [
+                            "x": line.endPoint.x,
+                            "y": line.endPoint.y,
+                            "z": line.endPoint.z
+                        ]
+                    ]
+                }
+                
+                let measurementData: [String: Any] = [
+                    "totalDistance": measurementResult.totalDistance,
+                    "measurementLines": measurementLinesData
+                ]
+                
+                arView?.dismiss(animated: true)
+                result(measurementData)
+            }
+        }
+        
+        // Present your custom AR view
+        arView.modalPresentationStyle = UIModalPresentationStyle.fullScreen
+        controller.present(arView, animated: true)
     }
 }

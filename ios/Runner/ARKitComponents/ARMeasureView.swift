@@ -12,7 +12,11 @@ import SceneKit
 // Add public to make it accessible
 @available(iOS 15.0, *)
 public struct ARMeasureView: View {
-    @StateObject private var arViewModel = ARMeasureViewModel()
+    @ObservedObject var arViewModel: ARMeasureViewModel
+    
+    public init(viewModel: ARMeasureViewModel) {
+        self.arViewModel = viewModel
+    }
     
     public var body: some View {
         ZStack {
@@ -67,47 +71,36 @@ public struct ARMeasureView: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 60)
                 
-                Spacer()
-                
-                // Bottom Controls and Info
-                VStack(spacing: 16) {
-                    // Measurement Info Display
-                    if !arViewModel.measurements.isEmpty || !arViewModel.detectedObjects.isEmpty {
-                        VStack(spacing: 8) {
-                            if arViewModel.totalDistance > 0 {
-                                Text("Total Distance: \(arViewModel.formattedTotalDistance)")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .padding(.horizontal, 16)
-                                    .padding(.vertical, 8)
-                                    .background(Color.black.opacity(0.7))
-                                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                            }
-                            
-                            // AREA DISPLAY COMMENTED OUT FOR NOW
-                            // if arViewModel.totalArea > 0 {
-                            //     Text("Total Area: \(arViewModel.formattedTotalArea)")
-                            //         .font(.headline)
-                            //         .foregroundColor(.white)
-                            //         .padding(.horizontal, 16)
-                            //         .padding(.vertical, 8)
-                            //         .background(Color.black.opacity(0.7))
-                            //         .clipShape(RoundedRectangle(cornerRadius: 8))
-                            // }
-                            
-                            if arViewModel.measurementPoints.count >= 3 && !arViewModel.isPolygonClosed {
-                                Text("Long press to close polygon")
-                                    .font(.caption)
-                                    .foregroundColor(.yellow)
-                                    .padding(.horizontal, 12)
-                                    .padding(.vertical, 4)
-                                    .background(Color.black.opacity(0.5))
-                                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                            }
+                // Measurement Info Display - Moved to top
+                if !arViewModel.measurements.isEmpty || !arViewModel.detectedObjects.isEmpty {
+                    VStack(spacing: 8) {
+                        if arViewModel.totalDistance > 0 {
+                            Text("Total Distance: \(arViewModel.formattedTotalDistance)")
+                                .font(.headline)
+                                .foregroundColor(.white)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 8)
+                                .background(Color.black.opacity(0.7))
+                                .clipShape(RoundedRectangle(cornerRadius: 8))
+                        }
+                        
+                        if arViewModel.measurementPoints.count >= 3 && !arViewModel.isPolygonClosed {
+                            Text("Long press to close polygon")
+                                .font(.caption)
+                                .foregroundColor(.yellow)
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 4)
+                                .background(Color.black.opacity(0.5))
+                                .clipShape(RoundedRectangle(cornerRadius: 6))
                         }
                     }
+                    .padding(.top, 16)
+                    .padding(.horizontal, 20)
                 }
-                .padding(.bottom, 40)
+                
+                Spacer()
+                
+                // Bottom Controls and Info section removed - measurements now at top
             }
             
             // Center Crosshair with Depth Detection - iOS Measure App Style
@@ -208,6 +201,42 @@ public struct ARMeasureView: View {
                     }
                 }
             }
+            
+            // Bottom Controls
+            VStack {
+                Spacer()
+                
+                HStack(spacing: 20) {
+                    // Cancel Button
+                    Button(action: {
+                        arViewModel.cancelMeasurement()
+                    }) {
+                        Text("Cancel")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.red.opacity(0.8))
+                            .cornerRadius(12)
+                    }
+                    
+                    // Submit Button
+                    Button(action: {
+                        arViewModel.submitMeasurements()
+                    }) {
+                        Text("Submit")
+                            .font(.headline)
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color.green.opacity(0.8))
+                            .cornerRadius(12)
+                    }
+                    .disabled(arViewModel.measurementPoints.isEmpty)
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 50) // Increased padding for better clearance
+            }
         }
     }
 }
@@ -229,5 +258,5 @@ struct ARViewRepresentable: UIViewRepresentable {
 
 @available(iOS 15.0, *)
 #Preview {
-    ARMeasureView()
+    ARMeasureView(viewModel: ARMeasureViewModel())
 } 

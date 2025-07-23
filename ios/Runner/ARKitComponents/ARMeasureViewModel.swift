@@ -9,6 +9,18 @@ import SwiftUI
 import ARKit
 import SceneKit
 
+// MARK: - Measurement Result Data Structure
+@available(iOS 15.0, *)
+public struct MeasurementResult {
+    public let totalDistance: Float
+    public let measurementLines: [MeasurementLine]
+    
+    public init(totalDistance: Float, measurementLines: [MeasurementLine]) {
+        self.totalDistance = totalDistance
+        self.measurementLines = measurementLines
+    }
+}
+
 enum ARSessionStatus {
     case normal
     case limitedTracking
@@ -533,6 +545,26 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         isPolygonClosed = false
     }
     
+    // MARK: - Dismiss Functionality
+    var onDismiss: (() -> Void)?
+    var onSubmit: ((MeasurementResult) -> Void)?
+    
+    func dismissView() {
+        onDismiss?()
+    }
+    
+    func cancelMeasurement() {
+        onDismiss?()
+    }
+    
+    func submitMeasurements() {
+        let result = MeasurementResult(
+            totalDistance: totalDistance,
+            measurementLines: measurements
+        )
+        onSubmit?(result)
+    }
+    
     func toggleObjectDetection() {
         isObjectDetectionEnabled.toggle()
         
@@ -823,19 +855,34 @@ extension ARMeasureViewModel: ARSessionDelegate {
 }
 
 // MARK: - Data Models
-struct MeasurementLine: Identifiable {
-    let id: UUID
-    let startPoint: SCNVector3
-    let endPoint: SCNVector3
-    let distance: Float
+public struct MeasurementLine: Identifiable {
+    public let id: UUID
+    public let startPoint: SCNVector3
+    public let endPoint: SCNVector3
+    public let distance: Float
+    
+    public init(id: UUID, startPoint: SCNVector3, endPoint: SCNVector3, distance: Float) {
+        self.id = id
+        self.startPoint = startPoint
+        self.endPoint = endPoint
+        self.distance = distance
+    }
 }
 
-struct DetectedObject: Identifiable {
-    let id: UUID
-    let width: Float
-    let height: Float
-    let area: Float
-    let center: SCNVector3
+public struct DetectedObject: Identifiable {
+    public let id: UUID
+    public let width: Float
+    public let height: Float
+    public let area: Float
+    public let center: SCNVector3
+    
+    public init(id: UUID, width: Float, height: Float, area: Float, center: SCNVector3) {
+        self.id = id
+        self.width = width
+        self.height = height
+        self.area = area
+        self.center = center
+    }
 }
 
 // MARK: - SCNVector3 Extensions

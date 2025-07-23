@@ -1,12 +1,29 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'models/measurement_models.dart';
 
-void main() {
-  runApp(const MyApp());
+// MARK: - Channel Names (Mirror of iOS AppChannelEnum)
+enum IOSAppChannelEnum {
+  arMeasure('org.ostafix.ar_measure');
+
+  const IOSAppChannelEnum(this.value);
+  final String value;
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+// MARK: - Method Names (Mirror of iOS MethodChannelEnum)
+enum IOSMethodChannelEnum {
+  startARMeasurement('startARMeasurement');
+
+  const IOSMethodChannelEnum(this.value);
+  final String value;
+}
+
+void main() {
+  runApp(ARMeasureApp());
+}
+
+class ARMeasureApp extends StatelessWidget {
+  const ARMeasureApp({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -28,22 +45,24 @@ class MyApp extends StatelessWidget {
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
 
-  static const platform = MethodChannel('com.example.ar_measure/ar');
+  static final platform = MethodChannel(IOSAppChannelEnum.arMeasure.value);
 
   Future<void> _startARMeasurement(BuildContext context) async {
     try {
-      await platform.invokeMethod('startARMeasurement');
-    } on PlatformException catch (e) {
-      if (e.code == 'UNAVAILABLE') {
+      final result = await platform.invokeMethod(IOSMethodChannelEnum.startARMeasurement.value);
+
+      if (result != null) {
+        MeasurementResult measurementResult = MeasurementResult.fromMethodChannelResult(result);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(e.message ?? 'AR features not available')),
+          SnackBar(content: Text('measurementResult: $measurementResult')),
         );
       } else {
-        print("Failed to start AR measurement: '${e.message}'.");
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to start AR: ${e.message}')),
+          const SnackBar(content: Text('AR measurement cancelled')),
         );
       }
+    } catch (e) {
+      print('Error in _startARMeasurement: $e');
     }
   }
 
