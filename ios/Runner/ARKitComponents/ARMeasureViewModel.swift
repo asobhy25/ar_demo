@@ -9,6 +9,15 @@ import SwiftUI
 import ARKit
 import SceneKit
 
+// MARK: - App Color Constants
+extension UIColor {
+    static let primaryAmber = UIColor(red: 1.0, green: 0.749, blue: 0.0, alpha: 1.0) // #FFBF00
+    static let primaryGray = UIColor(red: 0.102, green: 0.102, blue: 0.110, alpha: 1.0) // #1A1A1C
+    static let cardGray = UIColor(red: 0.180, green: 0.180, blue: 0.192, alpha: 1.0) // #2E2E31
+    static let primaryWhite = UIColor.white // #FFFFFF
+    static let secondaryRed = UIColor(red: 1.0, green: 0.279, blue: 0.279, alpha: 1.0) // #FF4747
+}
+
 // MARK: - Measurement Result Data Structure
 @available(iOS 15.0, *)
 public struct MeasurementResult {
@@ -278,7 +287,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         // Create geometry from vertices (simplified triangulation)
         let geometry = createPolygonGeometry(from: vertices)
         let material = SCNMaterial()
-        material.diffuse.contents = UIColor.systemYellow.withAlphaComponent(0.2)
+        material.diffuse.contents = UIColor.primaryAmber.withAlphaComponent(0.3)
         material.isDoubleSided = true
         geometry.materials = [material]
         
@@ -338,11 +347,11 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         let material = SCNMaterial()
         switch surfaceType {
         case .existingPlaneUsingExtent:
-            material.diffuse.contents = UIColor.systemGreen // High confidence
+            material.diffuse.contents = UIColor.primaryAmber // High confidence
         case .estimatedHorizontalPlane, .estimatedVerticalPlane:
-            material.diffuse.contents = UIColor.white // Standard
+            material.diffuse.contents = UIColor.primaryWhite // Standard
         default:
-            material.diffuse.contents = UIColor.systemOrange // Lower confidence
+            material.diffuse.contents = UIColor.primaryAmber.withAlphaComponent(0.7) // Lower confidence
         }
         
         material.lightingModel = .constant
@@ -355,7 +364,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         let glowRadius: Float = 0.035 // Bigger glow to match bigger dots
         let glowGeometry = SCNSphere(radius: CGFloat(glowRadius * scaleFactor))
         let glowMaterial = SCNMaterial()
-        glowMaterial.diffuse.contents = UIColor.white.withAlphaComponent(0.3)
+        glowMaterial.diffuse.contents = UIColor.primaryAmber.withAlphaComponent(0.3)
         glowMaterial.lightingModel = .constant
         glowGeometry.materials = [glowMaterial]
         
@@ -373,7 +382,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         
         // White material for the line
         let lineMaterial = SCNMaterial()
-        lineMaterial.diffuse.contents = UIColor.white
+        lineMaterial.diffuse.contents = UIColor.primaryAmber
         lineMaterial.lightingModel = .constant
         cylinder.materials = [lineMaterial]
         
@@ -403,7 +412,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         
         // Create the label background
         let backgroundNode = SKShapeNode(rectOf: CGSize(width: backgroundWidth, height: backgroundHeight), cornerRadius: backgroundHeight * 0.5)
-        backgroundNode.fillColor = UIColor.white
+        backgroundNode.fillColor = UIColor.cardGray
         backgroundNode.strokeColor = UIColor.clear
         backgroundNode.position = CGPoint(x: sceneWidth/2, y: sceneHeight/2)
         skScene.addChild(backgroundNode)
@@ -412,7 +421,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         let label = SKLabelNode(text: textString)
         label.fontName = "Helvetica-Bold"
         label.fontSize = fontSize
-        label.fontColor = UIColor.black
+        label.fontColor = UIColor.primaryWhite
         label.position = CGPoint(x: sceneWidth/2, y: sceneHeight/2)
         label.verticalAlignmentMode = .center
         label.horizontalAlignmentMode = .center
@@ -454,7 +463,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         
         // Create black text material
         let textMaterial = SCNMaterial()
-        textMaterial.diffuse.contents = UIColor.black
+        textMaterial.diffuse.contents = UIColor.primaryWhite
         textMaterial.lightingModel = .constant // Use constant lighting for flat appearance
         textMaterial.isDoubleSided = true // Make text visible from both sides
         textGeometry.materials = [textMaterial]
@@ -470,7 +479,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         let backgroundGeometry = SCNPlane(width: CGFloat(textWidth + 0.015), height: CGFloat(textHeight + 0.01))
         backgroundGeometry.cornerRadius = CGFloat((textHeight + 0.01) * 0.25) // Rounded corners
         let backgroundMaterial = SCNMaterial()
-        backgroundMaterial.diffuse.contents = UIColor.white.withAlphaComponent(0.95)
+        backgroundMaterial.diffuse.contents = UIColor.cardGray.withAlphaComponent(0.95)
         backgroundMaterial.lightingModel = .constant
         backgroundMaterial.isDoubleSided = true // Make background visible from both sides
         backgroundGeometry.materials = [backgroundMaterial]
@@ -722,8 +731,8 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         let line1 = SCNCylinder(radius: CGFloat(radius), height: CGFloat(length))
         let line2 = SCNCylinder(radius: CGFloat(radius), height: CGFloat(length))
         
-        line1.materials.first?.diffuse.contents = UIColor.systemYellow
-        line2.materials.first?.diffuse.contents = UIColor.systemYellow
+        line1.materials.first?.diffuse.contents = UIColor.primaryAmber
+        line2.materials.first?.diffuse.contents = UIColor.primaryAmber
         
         let node1 = SCNNode(geometry: line1)
         let node2 = SCNNode(geometry: line2)
@@ -759,7 +768,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         
         // Create the label background
         let backgroundNode = SKShapeNode(rectOf: CGSize(width: backgroundWidth, height: backgroundHeight), cornerRadius: backgroundHeight * 0.25)
-        backgroundNode.fillColor = UIColor.white
+        backgroundNode.fillColor = UIColor.cardGray
         backgroundNode.strokeColor = UIColor.clear
         backgroundNode.position = CGPoint(x: centerX, y: centerY)
         skScene.addChild(backgroundNode)
@@ -768,7 +777,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         let label = SKLabelNode(text: text)
         label.fontName = "Helvetica-Bold"
         label.fontSize = scaleFactor * 0.2
-        label.fontColor = UIColor.black
+        label.fontColor = UIColor.primaryWhite
         label.position = CGPoint(x: centerX, y: centerY - label.fontSize * 0.3)
         label.horizontalAlignmentMode = .center
         label.verticalAlignmentMode = .center
