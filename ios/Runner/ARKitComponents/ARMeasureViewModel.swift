@@ -51,19 +51,24 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
     private var polygonNodes: [SCNNode] = []
     
     private func formatDistance(_ distance: Float) -> String {
-        // Convert meters to the most appropriate unit
-        if distance < 0.01 {
-            // Very small distances in millimeters
-            return String(format: "%.0f mm", distance * 1000)
-        } else if distance < 1.0 {
-            // Small distances in centimeters with 1 decimal
-            return String(format: "%.1f cm", distance * 100)
-        } else if distance < 10.0 {
-            // Medium distances in meters with 2 decimals
-            return String(format: "%.2f m", distance)
+        // Convert meters to inches (1 meter = 39.3701 inches)
+        let inches = distance * 39.3701
+        
+        if inches < 12.0 {
+            // Small distances in inches with 2 decimals
+            return String(format: "%.2f\"", inches)
+        } else if inches < 120.0 {
+            // Medium distances in inches with 1 decimal
+            return String(format: "%.1f\"", inches)
         } else {
-            // Large distances in meters with 1 decimal
-            return String(format: "%.1f m", distance)
+            // Large distances in feet and inches
+            let feet = Int(inches / 12)
+            let remainingInches = inches.truncatingRemainder(dividingBy: 12)
+            if remainingInches < 0.1 {
+                return String(format: "%d'", feet)
+            } else {
+                return String(format: "%d' %.1f\"", feet, remainingInches)
+            }
         }
     }
     
@@ -141,7 +146,10 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         )
         
         // Add point to the scene
-        let pointNode = createPointNode(at: worldPosition, surfaceType: hitTestResult.type)
+        // Calculate scaling distance based on distance from camera or existing measurements
+        let scalingDistance = measurementPoints.isEmpty ? Float(hitTestResult.distance) : 
+                             measurements.map { $0.distance }.max() ?? Float(hitTestResult.distance)
+        let pointNode = createPointNode(at: worldPosition, surfaceType: hitTestResult.type, scalingDistance: scalingDistance)
         arView.scene.rootNode.addChildNode(pointNode)
         pointNodes.append(pointNode)
         measurementPoints.append(worldPosition)
@@ -184,7 +192,9 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         measurementPoints.append(position)
         
         // Create visual point
-        let pointNode = createPointNode(at: position)
+        // Calculate scaling distance based on existing measurements or default
+        let scalingDistance = measurements.map { $0.distance }.max() ?? 0.5
+        let pointNode = createPointNode(at: position, scalingDistance: scalingDistance)
         arView?.scene.rootNode.addChildNode(pointNode)
         pointNodes.append(pointNode)
         
@@ -318,9 +328,11 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         return SCNVector3(sum.x / count, sum.y / count + 0.02, sum.z / count)
     }
     
-    private func createPointNode(at position: SCNVector3, surfaceType: ARHitTestResult.ResultType = .estimatedHorizontalPlane) -> SCNNode {
-        // Create sphere geometry for the point
-        let sphere = SCNSphere(radius: 0.008)
+    private func createPointNode(at position: SCNVector3, surfaceType: ARHitTestResult.ResultType = .estimatedHorizontalPlane, scalingDistance: Float = 0.5) -> SCNNode {
+        // Create sphere geometry for the point - scale based on distance
+        let baseRadius: Float = 0.025 // Much bigger base size
+        let scaleFactor = min(max(scalingDistance * 0.1, 2.0), 5.0) // Scale between 2x-5x based on distance
+        let sphere = SCNSphere(radius: CGFloat(baseRadius * scaleFactor))
         
         // Color based on surface detection quality
         let material = SCNMaterial()
@@ -340,7 +352,8 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         pointNode.position = position
         
         // Add a subtle glow effect for better visibility
-        let glowGeometry = SCNSphere(radius: 0.012)
+        let glowRadius: Float = 0.035 // Bigger glow to match bigger dots
+        let glowGeometry = SCNSphere(radius: CGFloat(glowRadius * scaleFactor))
         let glowMaterial = SCNMaterial()
         glowMaterial.diffuse.contents = UIColor.white.withAlphaComponent(0.3)
         glowMaterial.lightingModel = .constant
@@ -355,8 +368,8 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
     private func createLineNode(from start: SCNVector3, to end: SCNVector3) -> SCNNode {
         let distance = start.distance(to: end)
         
-        // Create a thin white line
-        let cylinder = SCNCylinder(radius: 0.001, height: CGFloat(distance))
+        // Create a bold white line
+        let cylinder = SCNCylinder(radius: 0.005, height: CGFloat(distance))
         
         // White material for the line
         let lineMaterial = SCNMaterial()
@@ -421,7 +434,7 @@ public class ARMeasureViewModel: NSObject, ObservableObject {
         plane.materials = [material]
         
         let textNode = SCNNode(geometry: plane)
-        textNode.position = SCNVector3(0, 0, 0.01)
+        textNode.position = SCNVector3(0, 0, 0.05)
         
         // Add billboard constraint so label always faces camera
         let billboardConstraint = SCNBillboardConstraint()
